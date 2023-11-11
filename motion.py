@@ -1,3 +1,4 @@
+from gpiozero import MotionSensor
 from picamera2 import Picamera2
 from datetime import datetime
 from time import sleep
