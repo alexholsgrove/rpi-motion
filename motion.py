@@ -3,15 +3,30 @@ from picamera2 import Picamera2
 from datetime import datetime
 from time import sleep
 from signal import pause
-import subprocess
+import configparser, subprocess, sys
+
 
 # Setup
-server_host = ""
-server_port = "23"
-server_path = ""
-server_user = ""
+config = configparser.ConfigParser()
 
-timestamp_format = "%Y-%m-%d_%H.%M.%S"
+try:
+    config.read_file(open('settings.cfg'))
+except FileNotFoundError:
+    print("Could not find settings.cfg", file = sys.stderr)
+    sys.exit(1)
+
+
+# Remote server settings
+server_settings = config['server']
+server_host = server_settings['host']
+server_port = server_settings['port']
+server_path = server_settings['path']
+server_user = server_settings['user']
+
+# Camera settings
+camera_settings = config['camera']
+image_path = camera_settings['image_path']
+timestamp_format = camera_settings.get('timestamp_format', "%Y-%m-%d_%H.%M.%S")
 
 print("Setting up PIR...")
 pir = MotionSensor(4)
@@ -32,16 +47,16 @@ print("..done")
 def take_photo():
     now = datetime.now()
     timestamp = now.strftime(timestamp_format)
-    image_path = f"/home/pi/scripts/rpi-motion/images/{timestamp}.jpg"
-    print("Taking photo", image_path)
-    camera.capture_file(image_path)
+    snapshot_path = f"{image_path}{timestamp}.jpg"
+    print("Taking photo", snapshot_path)
+    camera.capture_file(snapshot_path)
     print("Captured")
-    return image_path
+    return snapshot_path
 
 
 # Upload image to the server
 def upload_file(file_path):
-    print("Uploading file", file_path)
+    print("Uploading file", file_path, "to", f"{server_user}@{server_host}:{server_path} on {server_port}")
     subprocess.run(["scp", "-O", "-P", server_port, file_path, f"{server_user}@{server_host}:{server_path}"])
 
 
