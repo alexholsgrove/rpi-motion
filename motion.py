@@ -28,6 +28,9 @@ camera_settings = config['camera']
 image_path = camera_settings['image_path']
 timestamp_format = camera_settings.get('timestamp_format', "%Y-%m-%d_%H.%M.%S")
 
+# Motion settings
+interval = int(config['motion'].getint('interval', 5));
+
 print("Setting up PIR...")
 pir = MotionSensor(4)
 print("..done")
@@ -64,6 +67,7 @@ def upload_file(file_path):
 def motion_detected():
     image_capture = take_photo()
     upload_file(image_capture)
+    sleep(interval)
 
 
 try:
