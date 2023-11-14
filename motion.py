@@ -3,14 +3,14 @@ from picamera2 import Picamera2
 from datetime import datetime
 from time import sleep
 from signal import pause
-import configparser, subprocess, sys
+import configparser, os, subprocess, sys
 
 
 # Setup
 config = configparser.ConfigParser()
 
 try:
-    config.read_file(open('settings.cfg'))
+    config.read(os.path.join(os.path.dirname(__file__), 'settings.cfg'))
 except FileNotFoundError:
     print("Could not find settings.cfg", file = sys.stderr)
     sys.exit(1)
