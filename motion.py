@@ -3,6 +3,7 @@ from picamera2 import Picamera2
 from datetime import datetime
 from time import sleep
 from signal import pause
+#from libcamera import controls
 import configparser, os, subprocess, sys
 
 
@@ -30,6 +31,8 @@ timestamp_format = camera_settings.get('timestamp_format', "%Y-%m-%d_%H.%M.%S")
 
 # Motion settings
 interval = int(config['motion'].getint('interval', 5));
+start_time = datetime.strptime(config['motion'].get('start_time', '08:00'), '%H:%M').time()
+end_time = datetime.strptime(config['motion'].get('end_time', '18:00'), '%H:%M').time()
 
 print("Setting up PIR...")
 pir = MotionSensor(4)
@@ -43,6 +46,7 @@ camera_config = camera.create_still_configuration(main={"size": (3280, 2464)}, l
 camera.configure(camera_config)
 
 camera.start()
+#camera.set_controls({"AfMode": controls.AfModeEnum.Continuous})
 print("..done")
 
 
@@ -52,6 +56,7 @@ def take_photo():
     timestamp = now.strftime(timestamp_format)
     snapshot_path = f"{image_path}{timestamp}.jpg"
     print("Taking photo", snapshot_path)
+    #camera.autofocus_cycle()
     camera.capture_file(snapshot_path)
     print("Captured")
     return snapshot_path
@@ -65,8 +70,11 @@ def upload_file(file_path):
 
 # Callback function for motion detected
 def motion_detected():
-    image_capture = take_photo()
-    upload_file(image_capture)
+    if start_time <= datetime.now().time() <= end_time:
+        image_capture = take_photo()
+        upload_file(image_capture)
+    else:
+        print("Motion detected, but outside start/end time")
     sleep(interval)
 
 
